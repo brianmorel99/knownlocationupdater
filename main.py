@@ -3,7 +3,7 @@ import uvicorn
 import base64
 from graph import check_named_location
 from app_config import read_config, write_config
-from fastapi import Depends, FastAPI, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.responses import Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 
@@ -38,7 +38,7 @@ async def catch_all(request: Request, hostname: str = "", myip: str = ""):
     config = read_config()
     loc_status = await check_named_location(config, hostname, myip)
     if loc_status == "Updated":
-        for x in config['locations']:
+        for x in config:
             if x['display_name'] == hostname:
                 x['ip_address'] = myip
         write_config(config)
@@ -68,7 +68,7 @@ async def administration(request: Request):
         )
     
     config = read_config()
-    print(config['locations'])
+    print(config)
     return templates.TemplateResponse(request=request, name="locations.html", context={"configs": config['locations']})
 
 async def main():

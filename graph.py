@@ -25,16 +25,16 @@ class Graph:
 
 async def check_named_location(config, hostname, ip_address):
     index = -1
-    for idx, host in enumerate(config['locations']):
+    for idx, host in enumerate(config):
         if host['display_name'] == hostname:
             host_id = host['location_id']
             index = idx
 
     if index != -1:
         azure_settings = {
-            'clientId': config['locations'][index]['client_id'],
-            'tenantId': config['locations'][index]['tenant_id'],
-            'clientSecret': config['locations'][index]['client_secret'],
+            'clientId': config[index]['client_id'],
+            'tenantId': config[index]['tenant_id'],
+            'clientSecret': config[index]['client_secret'],
         }
 
         graph: Graph = Graph(azure_settings)
@@ -77,12 +77,12 @@ def update_ip_address(ipaddr):
 
 async def list_named_locations(config):
 
-    for idx, _ in enumerate(config['locations']):
+    for idx, _ in enumerate(config):
 
         azure_settings = {
-            'clientId': config['locations'][idx]['client_id'],
-            'tenantId': config['locations'][idx]['tenant_id'],
-            'clientSecret': config['locations'][idx]['client_secret'],
+            'clientId': config[idx]['client_id'],
+            'tenantId': config[idx]['tenant_id'],
+            'clientSecret': config[idx]['client_secret'],
         }
 
         graph: Graph = Graph(azure_settings)
