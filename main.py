@@ -69,7 +69,7 @@ async def administration(request: Request):
     
     config = read_config()
     print(config)
-    return templates.TemplateResponse(request=request, name="locations.html", context={"configs": config['locations']})
+    return templates.TemplateResponse(request=request, name="locations.html", context={"configs": config})
 
 async def main():
     config = uvicorn.Config("main:app", port=8080, log_level="info")
