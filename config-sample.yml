@@ -1,0 +1,16 @@
+locations:
+  - location_id: # Replace with location_ID from Microsoft
+    display_name: # This needs to match the name given to the Named Location
+    ip_address: # IP Address
+    is_trusted: True # Leave this to True
+    client_id: # This is the client ID from Microsoft
+    client_secret: # This is the client secret created for this app
+    tenant_id: # Tenant ID from Microsoft
+  - location_id: # Can have multiple Entries
+    display_name: #
+    ip_address: #
+    is_trusted: True
+    client_id: #
+    client_secret: #
+    tenant_id: 
+  
