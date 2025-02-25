@@ -26,8 +26,8 @@
             </tr>
             <tr>
                 <td><label for="is_trusted">Is Trusted?</label></td>
-                <td align="right"><input type="checkbox" id="is_trusted" name="is_trusted" size=50 checked={{ config['is_trusted'] }}>
-                </td>
+                <td align="right"><input type="checkbox" id="is_trusted" name="is_trusted" value="True" size=50 {% if
+                        config['is_trusted'] %} checked="on" {% endif %} </td>
             </tr>
             <tr>
                 <td><label for="client_id">Client ID:</label></td>

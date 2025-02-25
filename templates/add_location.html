@@ -1,0 +1,52 @@
+<html>
+
+<head>
+    <title>New Config</title>
+</head>
+
+<body>
+    <table>
+        <form action="/add" method="post">
+            <tr>
+                <td><label for="location_id">Location ID:</label></td>
+                <td><input type="text" id="location_id" name="location_id" size=50 required></td>
+            </tr>
+            <tr>
+                <td><label for="display_name">Display Name:</label></td>
+                <td><input type="text" id="display_name" name="display_name" size=50 required></td>
+            </tr>
+            <tr>
+                <td><label for="ip_address">IP Address:</label></td>
+                <td><input type="text" id="ip_address" name="ip_address" size=50 required>
+                </td>
+            </tr>
+            <tr>
+                <td><label for="is_trusted">Is Trusted?</label></td>
+                <td align="right"><input type="checkbox" id="is_trusted" name="is_trusted" value="True" size=50>
+                </td>
+            </tr>
+            <tr>
+                <td><label for="client_id">Client ID:</label></td>
+                <td><input type="text" id="client_id" name="client_id" size=50 required>
+                </td>
+            </tr>
+            <tr>
+                <td><label for="client_secret">Client Secret:</label></td>
+                <td><input type="password" id="client_secret" name="client_secret" size=50 required>
+                </td>
+            </tr>
+            <tr>
+                <td><label for="tenant_id">Tenant ID:</label></td>
+                <td><input type="text" id="tenant_id" name="tenant_id" size=50 required>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td align="right"><button type="submit">Update</button></td>
+            </tr>
+        </form>
+    </table>
+    <br><br>
+</body>
+
+</html>

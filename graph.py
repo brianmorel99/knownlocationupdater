@@ -4,6 +4,7 @@ from msgraph import GraphServiceClient
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.ip_named_location import IpNamedLocation
 from msgraph.generated.models.i_pv4_cidr_range import IPv4CidrRange
+from location import Location
 
 
 class Graph:
@@ -23,43 +24,38 @@ class Graph:
             self.client_credential)  # type: ignore
 
 
-async def check_named_location(config, hostname, ip_address):
-    index = -1
-    for idx, host in enumerate(config):
-        if host['display_name'] == hostname:
-            host_id = host['location_id']
-            index = idx
+async def check_named_location(location: Location, new_ip_address: str) -> str:
 
-    if index != -1:
-        azure_settings = {
-            'clientId': config[index]['client_id'],
-            'tenantId': config[index]['tenant_id'],
-            'clientSecret': config[index]['client_secret'],
-        }
+    azure_settings = {
+        'clientId': location.client_id,
+        'tenantId': location.tenant_id,
+        'clientSecret': location.client_secret,
+    }
 
-        graph: Graph = Graph(azure_settings)
+    graph: Graph = Graph(azure_settings)
 
-        try:
-            result = await graph.app_client.identity.conditional_access.named_locations.get()
-            for idx, x in enumerate(result.value):
-                if x.id == host_id:
-                    index = idx
-            location = result.value[index]
+    try:
+        result = await graph.app_client.identity.conditional_access.named_locations.get()
 
-            iprange = location.ip_ranges[0]
-            if iprange.cidr_address == (ip_address + '/32'):
-                return "Unchanged"
-            else:
-                body = update_ip_address(ip_address)
-                result = await graph.app_client.identity.conditional_access.named_locations.by_named_location_id(location.id).patch(body)
-                return "Updated"
+        index = -1
 
-        except ODataError as odata_error:
-            print('Error:')
-            if odata_error.error:
-                print(odata_error.error.code, odata_error.error.message)
-    else:
-        return "Not Found"
+        for idx, x in enumerate(result.value):
+            if x.id == location.location_id:
+                index = idx
+        loc = result.value[index]
+
+        iprange = loc.ip_ranges[0]
+        if iprange.cidr_address == (new_ip_address + '/32'):
+            return "Unchanged"
+        else:
+            body = update_ip_address(new_ip_address)
+            result = await graph.app_client.identity.conditional_access.named_locations.by_named_location_id(loc.id).patch(body)
+            return "Updated"
+
+    except ODataError as odata_error:
+        print('Error:')
+        if odata_error.error:
+            print(odata_error.error.code, odata_error.error.message)
 
 
 def update_ip_address(ipaddr):
@@ -100,3 +96,33 @@ async def list_named_locations(config):
             print('Error:')
             if odata_error.error:
                 print(odata_error.error.code, odata_error.error.message)
+
+
+async def check_current_ip(location: Location):
+    azure_settings = {
+        'clientId': location.client_id,
+        'tenantId': location.tenant_id,
+        'clientSecret': location.client_secret,
+    }
+
+    graph: Graph = Graph(azure_settings)
+
+    try:
+        result = await graph.app_client.identity.conditional_access.named_locations.get()
+
+        index = -1
+        for idx, x in enumerate(result.value):
+            if x.id == location.location_id:
+                index = idx
+        loc = result.value[index]
+
+        iprange = loc.ip_ranges[0]
+        if iprange.cidr_address == (location.ip_address + '/32'):
+            return "Unchanged"
+        else:
+            return iprange.cidr_address
+
+    except ODataError as odata_error:
+        print('Error:')
+        if odata_error.error:
+            print(odata_error.error.code, odata_error.error.message)
