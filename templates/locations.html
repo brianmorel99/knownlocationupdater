@@ -1,0 +1,33 @@
+<html>
+
+<head>
+    <title>Current Config</title>
+</head>
+
+<body>
+    <table>
+        <tr>
+            <th>client_id</th>
+            <th>client_secret</th>
+            <th>display_name</th>
+            <th>ip_address</th>
+            <th>is_trusted</th>
+            <th>location_id</th>
+            <th>tenant_id</th>
+
+        </tr>
+        {% for config in configs %}
+        <tr>
+            <td>{{ config['client_id'] }}</td>
+            <td>{{ config['client_secret'] }}</td>
+            <td>{{ config['display_name'] }}</td>
+            <td>{{ config['ip_address'] }}</td>
+            <td>{{ config['is_trusted'] }}</td>
+            <td>{{ config['location_id'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</body>
+
+</html>
