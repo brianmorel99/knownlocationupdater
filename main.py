@@ -2,11 +2,11 @@ import asyncio
 import uvicorn
 import base64
 import logging
-from graph import check_named_location, check_current_ip
+from graph import get_current_location_ip, set_named_location_ip, get_location
 from app_config import read_config, write_config
-from location import Location
+from location import Location, get_location_index_by_id, get_location_index_by_name
 from fastapi import FastAPI, Request, status, Form
-from fastapi.responses import Response, JSONResponse, RedirectResponse
+from fastapi.responses import Response, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from uvicorn.config import LOGGING_CONFIG
 
@@ -22,6 +22,22 @@ bad_auth: Response = Response(
     content="Incorrect username or password",
     headers={"WWW-Authenticate": "Basic"},
 )
+
+
+async def get_all_locations() -> list[tuple[Location, Location]] | None:
+    config: list[Location] = read_config()
+
+    bundled_locations: list[tuple[Location, Location]] = list()
+
+    for location in config:
+        m365_location = await get_location(location)
+        if m365_location != None:
+            bundle = (location, m365_location)
+            bundled_locations.append(bundle)
+    if len(bundled_locations) > 0:
+        return bundled_locations
+    else:
+        return None
 
 
 def get_location_from_config(config: list[Location], hostname: str) -> Location:
@@ -50,29 +66,24 @@ async def catch_all(request: Request, hostname: str = "", myip: str = ""):
         logger.info(f"Invalid Authentication from {request.client.host}")
         return response
 
-    config = read_config()
-    loc = get_location_from_config(config, hostname)
+    config: list[Location] = read_config()
+    index: int | None = get_location_index_by_name(config, hostname)
 
-    loc_status = await check_named_location(loc, myip)
-    if loc_status == "Updated":
-        for x in config:
-            if x.display_name == hostname:
-                x.ip_address = myip
-        write_config(config)
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content="good " + myip
-        )
-    elif loc_status == "Unchanged":
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content="nochg " + myip
-        )
+    current_ip: str | None = await get_current_location_ip(config[index])
+
+    if current_ip == None:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+    elif current_ip == myip:
+        return Response(status_code=status.HTTP_200_OK, content="nochg " + myip)
     else:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content="Invalid Data"
-        )
+        config[index].ip_address = myip
+        write_config(config)
+        if await set_named_location_ip(config[index], myip):
+            logger.error(
+                f"Updating IP on Microsoft Failed - {request.client.host} - {request.url}")
+            return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
+        else:
+            return Response(status_code=status.HTTP_200_OK, content="good " + myip)
 
 
 @app.get("/admin")
@@ -168,6 +179,23 @@ async def add_location_post(request: Request,
     write_config(config)
 
     return RedirectResponse(url='/admin', status_code=302)
+
+
+@app.get("/list")
+async def list_get(request: Request):
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    authorized, response = await check_authentication(
+        request, admin_username, admin_password)
+    if not authorized:
+        logger.info(f"Invalid Authentication from {request.client.host}")
+        return response
+
+    config = await get_all_locations()
+    if config == None:
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
+    else:
+        return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": config})
 
 
 async def main():

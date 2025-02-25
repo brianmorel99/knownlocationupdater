@@ -1,0 +1,55 @@
+<html>
+
+<head>
+    <title>Location List</title>
+
+    <style>
+        table,
+        th,
+        td {
+            border: 2px solid black;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <table style="border: 1px solid black;  border-collapse: collapse;">
+        <tr>
+            <th><label>Location ID</label></th>
+            <th><label>Display Name</label></td>
+            <th><label>IP Address</label></th>
+            <th><label>Is Trusted</label></th>
+            <th><label>M365 IP Address</label></th>
+            <th><label>M365 Is Trusted</label></th>
+        </tr>
+        {% for config in configs %}
+        <tr>
+            <td><label>{{ config[0].location_id }}</label></td>
+            <td><label>{{ config[0].display_name }}</label></td>
+            <td><label>{{ config[0].ip_address }}</label></td>
+            <td><label>{{ config[0].is_trusted }}</label></td>
+            {% if config[0].ipaddress != config[1].ipaddress %}<td style="background-color: #f76c6c">
+            {% else %}<td>
+            {% endif %}
+                    <label>{{config[1].ip_address }}</label></td>
+            {% if config[0].is_trusted != config[1].is_trusted %}<td style="background-color: #f76c6c">
+                {% else %}<td>
+                {% endif %}
+                    <label>{{ config[1].is_trusted }}</label></td>
+            <td><a href="{{ url_for('admin_get') }}">Edit Location</a></td>
+            <td><a href="{{ url_for('admin_get') }}">Update Microsoft</a></td>
+        </tr>
+        <tr></tr>
+        {% endfor %}
+        </form>
+    </table>
+    <br><br>
+</body>
+
+</html>

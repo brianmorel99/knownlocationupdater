@@ -34,12 +34,14 @@ class Location:
         output += f'Tenant ID: {self.tenant_id}\n\n'
         return output
 
-def get_location_index_by_name(configs: list[Location], name: str) -> int:
+def get_location_index_by_name(configs: list[Location], name: str) -> int | None:
     for index, config in enumerate(configs):
         if config.display_name == name:
             return index
+    return None
 
-def get_location_index_by_id(configs: list[Location], id: str) -> int:
+def get_location_index_by_id(configs: list[Location], id: str) -> int | None:
     for index, config in enumerate(configs):
         if config.client_id == id:
             return index
+    return None
