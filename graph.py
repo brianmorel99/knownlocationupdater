@@ -25,20 +25,24 @@ async def check_named_location(config, hostname, ip_address):
     index = -1
     for idx, host in enumerate(config['locations']):
         if host['display_name'] == hostname:
+            host_id = host['location_id']
             index = idx
 
     if index != -1:
         azure_settings = {
-            'clientId': config['locations'][idx]['client_id'],
-            'tenantId': config['locations'][idx]['tenant_id'],
-            'clientSecret': config['locations'][idx]['client_secret'],
+            'clientId': config['locations'][index]['client_id'],
+            'tenantId': config['locations'][index]['tenant_id'],
+            'clientSecret': config['locations'][index]['client_secret'],
         }
 
         graph: Graph = Graph(azure_settings)
 
         try:
             result = await graph.app_client.identity.conditional_access.named_locations.get()
-            location = result.value[0]
+            for idx, x in enumerate(result.value):
+                if x.id == host_id:
+                    index = idx
+            location = result.value[index]
 
             iprange = location.ip_ranges[0]
             if iprange.cidr_address == (ip_address + '/32'):
