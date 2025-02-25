@@ -4,7 +4,9 @@ from msgraph import GraphServiceClient
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.ip_named_location import IpNamedLocation
 from msgraph.generated.models.i_pv4_cidr_range import IPv4CidrRange
+from msgraph.generated.models.named_location_collection_response import NamedLocationCollectionResponse
 from location import Location
+import logging
 
 
 class Graph:
@@ -14,9 +16,9 @@ class Graph:
 
     def __init__(self, config: SectionProxy):
         self.settings = config
-        client_id = self.settings['clientId']
-        tenant_id = self.settings['tenantId']
-        client_secret = self.settings['clientSecret']
+        client_id: str = self.settings['clientId']
+        tenant_id: str = self.settings['tenantId']
+        client_secret: str = self.settings['clientSecret']
 
         self.client_credential = ClientSecretCredential(
             tenant_id, client_id, client_secret)
@@ -25,8 +27,9 @@ class Graph:
 
 
 async def check_named_location(location: Location, new_ip_address: str) -> str:
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
 
-    azure_settings = {
+    azure_settings: dict[str, str] = {
         'clientId': location.client_id,
         'tenantId': location.tenant_id,
         'clientSecret': location.client_secret,
@@ -35,16 +38,19 @@ async def check_named_location(location: Location, new_ip_address: str) -> str:
     graph: Graph = Graph(azure_settings)
 
     try:
-        result = await graph.app_client.identity.conditional_access.named_locations.get()
+        result: NamedLocationCollectionResponse | None = await graph.app_client.identity.conditional_access.named_locations.get()
+
+        if result == None:
+            logger.warning("Location does not exist")
 
         index = -1
 
         for idx, x in enumerate(result.value):
             if x.id == location.location_id:
                 index = idx
-        loc = result.value[index]
+        loc: IpNamedLocation = result.value[index]
 
-        iprange = loc.ip_ranges[0]
+        iprange: IPv4CidrRange = loc.ip_ranges[0]
         if iprange.cidr_address == (new_ip_address + '/32'):
             return "Unchanged"
         else:
@@ -53,9 +59,9 @@ async def check_named_location(location: Location, new_ip_address: str) -> str:
             return "Updated"
 
     except ODataError as odata_error:
-        print('Error:')
+        logger.warning('ODataError from Microsoft Graph')
         if odata_error.error:
-            print(odata_error.error.code, odata_error.error.message)
+            logger.warning(odata_error.error.code, odata_error.error.message)
 
 
 def update_ip_address(ipaddr):
@@ -108,7 +114,7 @@ async def check_current_ip(location: Location):
     graph: Graph = Graph(azure_settings)
 
     try:
-        result = await graph.app_client.identity.conditional_access.named_locations.get()
+        result: NamedLocationCollectionResponse | None = await graph.app_client.identity.conditional_access.named_locations.get()
 
         index = -1
         for idx, x in enumerate(result.value):
@@ -126,3 +132,41 @@ async def check_current_ip(location: Location):
         print('Error:')
         if odata_error.error:
             print(odata_error.error.code, odata_error.error.message)
+
+
+async def get_current_location_ip(location: Location) -> str:
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    azure_settings: dict[str, str] = {
+        'clientId': location.client_id,
+        'tenantId': location.tenant_id,
+        'clientSecret': location.client_secret,
+    }
+
+    graph: Graph = Graph(azure_settings)
+
+    try:
+        result: NamedLocationCollectionResponse | None = await graph.app_client.identity.conditional_access.named_locations.get()
+
+        if result == None:
+            logger.warning("Graph could not find a location")
+
+        index: int = -1
+
+        for idx, x in enumerate(result.value):
+            if x.id == location.location_id:
+                index = idx
+
+        if index != -1:
+            loc: IpNamedLocation = result.value[index]
+            iprange: IPv4CidrRange = loc.ip_ranges[0]
+            logger.info(f"Microsoft Shows IP: {iprange.cidr_address} for Location: {location.display_name}")
+            return iprange.cidr_address.split('/')[0]
+        else:
+            logger.warning(
+                "Graph cound not find the location in the response.")
+
+    except ODataError as odata_error:
+        logger.warning('Graph returned an ODataError:')
+        if odata_error.error:
+            logger.warning(odata_error.error.code, odata_error.error.message)

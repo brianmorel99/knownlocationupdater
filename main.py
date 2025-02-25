@@ -1,12 +1,14 @@
 import asyncio
 import uvicorn
 import base64
+import logging
 from graph import check_named_location, check_current_ip
 from app_config import read_config, write_config
 from location import Location
 from fastapi import FastAPI, Request, status, Form
 from fastapi.responses import Response, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from uvicorn.config import LOGGING_CONFIG
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -68,7 +70,7 @@ async def catch_all(request: Request, hostname: str = "", myip: str = ""):
 
 
 @app.get("/admin")
-async def administration(request: Request):
+async def admin_get(request: Request):
     if not await check_authentication(request, admin_username, admin_password):
 
         return Response(
@@ -117,7 +119,7 @@ async def admin_post(request: Request,
 
 
 @app.get("/add")
-async def administration(request: Request):
+async def add_location_get(request: Request):
     if not await check_authentication(request, admin_username, admin_password):
 
         return Response(
@@ -130,7 +132,7 @@ async def administration(request: Request):
 
 
 @app.post("/add")
-async def admin_post(request: Request,
+async def add_location_post(request: Request,
                      location_id: str = Form(),
                      display_name: str = Form(),
                      ip_address: str = Form(),
@@ -165,8 +167,11 @@ async def admin_post(request: Request,
 
 
 async def main():
+    LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s [%(name)s] %(levelprefix)s %(message)s"
+    LOGGING_CONFIG["formatters"]["access"]["fmt"] = '%(asctime)s [%(name)s] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
     config = uvicorn.Config("main:app", port=8080, log_level="info")
     server = uvicorn.Server(config)
+
     await server.serve()
 
 if __name__ == "__main__":
