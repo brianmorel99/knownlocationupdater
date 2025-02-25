@@ -8,5 +8,5 @@ def read_config():
 
 
 def write_config(data):
-    with open("config-new.yml", "w") as file_object:
+    with open("config.yml", "w") as file_object:
         yaml.dump(data, file_object)

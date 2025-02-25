@@ -1,10 +1,8 @@
 from configparser import SectionProxy
 from azure.identity.aio import ClientSecretCredential
 from msgraph import GraphServiceClient
-from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.ip_named_location import IpNamedLocation
-from msgraph.generated.models.ip_range import IpRange
 from msgraph.generated.models.i_pv4_cidr_range import IPv4CidrRange
 
 class Graph:

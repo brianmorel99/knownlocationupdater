@@ -28,11 +28,15 @@ async def check_authentication(request: Request, call_next):
 
 @app.get("/")
 async def catch_all(request: Request, hostname: str = "", myip: str = ""):
-    print("Hostname :" + hostname)
-    print("IP Address: " + myip)
+    #print("Hostname :" + hostname)
+    #print("IP Address: " + myip)
     config = read_config()
     loc_status = await check_named_location(config, hostname, myip)
     if loc_status == "Updated":
+        for x in config['locations']:
+            if x['display_name'] == hostname:
+                x['ip_address'] = myip
+        write_config(config)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content="good " + myip
