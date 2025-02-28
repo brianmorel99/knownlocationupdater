@@ -25,6 +25,7 @@ admin_password: str | None = os.getenv("ADMIN_PASSWORD")
 
 my_router = APIRouter()
 
+
 @my_router.get("/")
 async def catch_all(request: Request, hostname: str = "", myip: str = "") -> Response:
     """Process inbound request from router with DDNS message and apply.
@@ -81,6 +82,7 @@ async def catch_all(request: Request, hostname: str = "", myip: str = "") -> Res
 
     return Response(status_code=status.HTTP_200_OK, content="good " + myip)
 
+
 @my_router.get("/admin")
 async def admin_get(request: Request) -> Response:
     """Admin function to return a response with helpful links.
@@ -108,6 +110,7 @@ async def admin_get(request: Request) -> Response:
 
     # Send the template HTML file as response.
     return templates.TemplateResponse(request=request, name="admin.html", context={})
+
 
 @my_router.get("/list-m365")
 async def list_get_m365(request: Request) -> Response:
@@ -179,6 +182,7 @@ async def list_get(request: Request) -> Response:
 
     return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": configs})
 
+
 @my_router.get("/add")
 async def add_location_get(request: Request) -> Response:
     """Return a blank Location form for entering a new Location.
@@ -203,7 +207,8 @@ async def add_location_get(request: Request) -> Response:
 
     return templates.TemplateResponse(request=request, name="add_location.html")
 
-@my_router.get("/add")
+
+@my_router.post("/add")
 async def add_location_post(
     request: Request,
     location_id: Annotated[str, Form()],
@@ -264,6 +269,7 @@ async def add_location_post(
 
     return RedirectResponse(url="/admin", status_code=302)
 
+
 @my_router.get("/edit/{id_number}")
 async def edit_location_get(request: Request, id_number: str) -> Response:
     """Return a Location form filled in with current data of Location id.
@@ -303,17 +309,18 @@ async def edit_location_get(request: Request, id_number: str) -> Response:
         context={"config": configs[index], "action": action},
     )
 
-@my_router.get("/edit/{id_number}")
+
+@my_router.post("/edit/{id_number}")
 async def edit_location_post(
     request: Request,
     location_id: Annotated[str, Form()],
     display_name: Annotated[str, Form()],
     ip_address: Annotated[str, Form()],
-    is_trusted: Annotated[bool, Form()],
     client_id: Annotated[str, Form()],
     client_secret: Annotated[str, Form()],
     tenant_id: Annotated[str, Form()],
     id_number: str,
+    is_trusted: Annotated[bool, Form()] = False,  # noqa: FBT002
 ) -> Response:
     """Take in the submited form and updates a Location.
 
@@ -378,6 +385,7 @@ async def edit_location_post(
 
     return RedirectResponse(url="/list-m365", status_code=302)
 
+
 @my_router.get("/update/{id_number}")
 async def update_location_get(request: Request, id_number: str = id) -> Response:
     """Update Microsoft Graph API with new Location data.
@@ -426,3 +434,100 @@ async def update_location_get(request: Request, id_number: str = id) -> Response
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
 
     return RedirectResponse(url="/list-m365", status_code=302)
+
+
+@my_router.get("/delete/{id_number}")
+async def delete_location_get(request: Request, id_number: str) -> Response:
+    """Return a Location form filled in with current data of Location id.
+
+    This function returns a response with a form that is pre-populated
+    with Location "id" data.  This allows for first confirmation of
+    deleting the location.
+
+    Args:
+        request:
+            The incomming HTTP Request
+        id_number:
+            The Location ID of the Location to delete.
+
+    Returns:
+            Response object to send back to the caller.
+
+    """
+    logger: logging.Logger = logging.getLogger("uvicorn.error")
+
+    authorized, response = await check_authentication(request, admin_username, admin_password)
+    if not authorized:
+        logger.info("Invalid Authentication", extra={"host": request.client.host})
+        return response
+
+    configs: list[Location] = read_config()
+
+    index: int | None = get_location_index_by_id(configs, id_number)
+
+    if index is None:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+
+    action: str = "/delete/" + configs[index].location_id
+
+    return templates.TemplateResponse(
+        request=request,
+        name="delete_location.html",
+        context={"config": configs[index], "action": action},
+    )
+
+
+@my_router.post("/delete/{id_number}")
+async def delete_location_post(
+    request: Request,
+    id_number: str,
+    deletion_confirmed: Annotated[bool, Form()] = False,  # noqa: FBT002
+
+) -> Response:
+    """Take in the first confirmation of Location delete.
+
+    This function is called after the first confirmation of Location delete.  It will give the user
+    a last chance to cancel or process the delete if it receives the second confirmation.
+
+    Args:
+        request:
+            The incomming HTTP Request
+        deletion_confirmed:
+            Incomming form data
+        id_number:
+            The Location ID to update
+
+    Returns:
+            Response object to redirect caller to admin page.
+
+    """
+    logger: logging.Logger = logging.getLogger("uvicorn.error")
+
+    authorized, response = await check_authentication(request, admin_username, admin_password)
+    if not authorized:
+        logger.info("Invalid Authentication", extra={"host": request.client.host})
+        return response
+
+    configs: list[Location] = read_config()
+
+    index: int | None = get_location_index_by_id(configs, id_number)
+
+    if index is None:
+        logger.info("Unable to find Location by ID")
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+
+    if deletion_confirmed:
+        logger.info("Received an delete request 2nd confirmation, Location_ID: %s", configs[index].location_id)
+        logger.info("Deleting Location: %s", configs[index])
+        del configs[index]
+        write_config(configs)
+        return RedirectResponse(url="/list", status_code=302)
+
+    logger.info("Received an delete request 1st confirmation, Location_ID: %s", configs[index].location_id)
+    action: str = "/delete/" + configs[index].location_id
+
+    return templates.TemplateResponse(
+        request=request,
+        name="delete_location_confirm.html",
+        context={"config": configs[index], "action": action},
+    )
