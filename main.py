@@ -12,6 +12,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
+import os
+from typing import Annotated
 
 import uvicorn
 from fastapi import FastAPI, Form, Request, status
@@ -26,10 +28,11 @@ from location import Location, get_location_index_by_id, get_location_index_by_n
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-ddns_username = ""
-ddns_password = ""
-admin_username = ""
-admin_password = ""
+ddns_username = os.getenv("DDNS_USERNAME")
+ddns_password = os.getenv("DDNS_PASSWORD")
+admin_username = os.getenv("ADMIN_USERNAME")
+admin_password = os.getenv("ADMIN_PASSWORD")
+
 bad_auth: Response = Response(
     status_code=status.HTTP_401_UNAUTHORIZED,
     content="Incorrect username or password",
@@ -208,7 +211,7 @@ async def admin_get(request: Request) -> Response:
 
 # A page for listing all Locations in the Config, including Current Microsoft Status
 @app.get("/list-m365")
-async def list_get_m365(request: Request) -> Response | None:
+async def list_get_m365(request: Request) -> Response:
     """Return a table of Locations in an html response, including Microsoft.
 
     This function returns a response with a HTML page with a table of
@@ -245,7 +248,7 @@ async def list_get_m365(request: Request) -> Response | None:
 
 # A page for listing all Locations in the Config, without Current Microsoft Status
 @app.get("/list")
-async def list_get(request: Request) -> Response | None:
+async def list_get(request: Request) -> Response:
     """Return a table of Locations in an html response.
 
     This function returns a response with a HTML page with a table of
@@ -280,7 +283,7 @@ async def list_get(request: Request) -> Response | None:
 
 
 @app.get("/add")
-async def add_location_get(request: Request) -> Response | None:
+async def add_location_get(request: Request) -> Response:
     """Return a blank Location form for entering a new Location.
 
     This function returns a response with a form for adding a
@@ -307,13 +310,13 @@ async def add_location_get(request: Request) -> Response | None:
 @app.post("/add")
 async def add_location_post(
     request: Request,
-    location_id: str = Form(),
-    display_name: str = Form(),
-    ip_address: str = Form(),
-    is_trusted: bool = Form(False),
-    client_id: str = Form(),
-    client_secret: str = Form(),
-    tenant_id: str = Form(),
+    location_id: Annotated[str, Form()],
+    display_name: Annotated[str, Form()],
+    ip_address: Annotated[str, Form()],
+    is_trusted: Annotated[bool, Form()],
+    client_id: Annotated[str, Form()],
+    client_secret: Annotated[str, Form()],
+    tenant_id: Annotated[str, Form()],
 ) -> Response:
     """Take in the submited form and create a new Location.
 
@@ -366,7 +369,7 @@ async def add_location_post(
     return RedirectResponse(url="/admin", status_code=302)
 
 
-@app.get("/edit/{id}")
+@app.get("/edit/{id_number}")
 async def edit_location_get(request: Request, id_number: str) -> Response:
     """Return a Location form filled in with current data of Location id.
 
@@ -406,18 +409,18 @@ async def edit_location_get(request: Request, id_number: str) -> Response:
     )
 
 
-@app.post("/edit/{id}")
+@app.post("/edit/{id_number}")
 async def edit_location_post(
     request: Request,
-    location_id: str = Form(),
-    display_name: str = Form(),
-    ip_address: str = Form(),
-    is_trusted: bool = Form(False),
-    client_id: str = Form(),
-    client_secret: str = Form(),
-    tenant_id: str = Form(),
-    id_number: str = id,
-) -> Response | RedirectResponse:
+    location_id: Annotated[str, Form()],
+    display_name: Annotated[str, Form()],
+    ip_address: Annotated[str, Form()],
+    is_trusted: Annotated[bool, Form()],
+    client_id: Annotated[str, Form()],
+    client_secret: Annotated[str, Form()],
+    tenant_id: Annotated[str, Form()],
+    id_number: str,
+) -> Response:
     """Take in the submited form and updates a Location.
 
     This function takes the inputs from the form and updates
@@ -482,8 +485,8 @@ async def edit_location_post(
     return RedirectResponse(url="/list-m365", status_code=302)
 
 
-@app.get("/update/{id}")
-async def update_location_get(request: Request, id_number: str = id) -> Response | RedirectResponse:
+@app.get("/update/{id_number}")
+async def update_location_get(request: Request, id_number: str = id) -> Response:
     """Update Microsoft Graph API with new Location data.
 
     This function takes a request with an ID and updates Microsoft's

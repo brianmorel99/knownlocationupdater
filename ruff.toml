@@ -3,11 +3,12 @@ target-version = "py311"
 
 [lint]
 select = ["ALL"]
-ignore = ["FAST002", "PLR0913", "FBT001", "FBT003"]
+ignore = ["PLR0913", "FBT001", "FBT003"]
 
 exclude = [
     "__pycache__",
     ".venv",
+    "*.ipynb",
 ]
 
 
