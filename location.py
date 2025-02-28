@@ -42,6 +42,6 @@ def get_location_index_by_name(configs: list[Location], name: str) -> int | None
 
 def get_location_index_by_id(configs: list[Location], id: str) -> int | None:
     for index, config in enumerate(configs):
-        if config.client_id == id:
+        if config.location_id == id:
             return index
     return None

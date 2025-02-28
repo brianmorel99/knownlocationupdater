@@ -87,7 +87,7 @@ async def catch_all(request: Request, hostname: str = "", myip: str = ""):
 
 
 @app.get("/admin")
-async def admin_get(request: Request):
+async def list_get(request: Request):
     logger: logging.Logger = logging.getLogger('uvicorn.error')
 
     authorized, response = await check_authentication(
@@ -96,42 +96,11 @@ async def admin_get(request: Request):
         logger.info(f"Invalid Authentication from {request.client.host}")
         return response
 
-    config = read_config()
-    return templates.TemplateResponse(request=request, name="locations.html", context={"configs": config})
-
-
-@app.post("/admin")
-async def admin_post(request: Request,
-                     location_id: str = Form(),
-                     display_name: str = Form(),
-                     ip_address: str = Form(),
-                     is_trusted: bool = Form(False),
-                     client_id: str = Form(),
-                     client_secret: str = Form(),
-                     tenant_id: str = Form()
-                     ):
-    logger: logging.Logger = logging.getLogger('uvicorn.error')
-
-    authorized, response = await check_authentication(
-        request, admin_username, admin_password)
-    if not authorized:
-        logger.info(f"Invalid Authentication from {request.client.host}")
-        return response
-
-    config: list[Location] = read_config()
-
-    for x in config:
-        if x.location_id == location_id:
-            x.display_name = display_name
-            x.ip_address = ip_address
-            x.is_trusted = is_trusted
-            x.client_id = client_id
-            x.client_secret = client_secret
-            x.tenant_id = tenant_id
-
-    write_config(config)
-
-    return RedirectResponse(url='/admin', status_code=302)
+    config = await get_all_locations()
+    if config == None:
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
+    else:
+        return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": config})
 
 
 @app.get("/add")
@@ -181,8 +150,8 @@ async def add_location_post(request: Request,
     return RedirectResponse(url='/admin', status_code=302)
 
 
-@app.get("/list")
-async def list_get(request: Request):
+@app.get("/edit")
+async def edit_location_get(request: Request, id:str):
     logger: logging.Logger = logging.getLogger('uvicorn.error')
 
     authorized, response = await check_authentication(
@@ -191,12 +160,79 @@ async def list_get(request: Request):
         logger.info(f"Invalid Authentication from {request.client.host}")
         return response
 
-    config = await get_all_locations()
-    if config == None:
-        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
-    else:
-        return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": config})
+    configs: list[Location] = read_config()
 
+    index: int | None = get_location_index_by_id(configs, id)
+
+    if index == None:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+
+    return templates.TemplateResponse(request=request, name="edit_location.html", context={"config": configs[index], "action": "/edit"})
+
+@app.get("/edit/{id}")
+async def edit_location(request: Request, id:str):
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    authorized, response = await check_authentication(
+        request, admin_username, admin_password)
+    if not authorized:
+        logger.info(f"Invalid Authentication from {request.client.host}")
+        return response
+
+    configs: list[Location] = read_config()
+
+    index: int | None = get_location_index_by_id(configs, id)
+
+    if index == None:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+    
+    action = "/edit/" + configs[index].location_id
+
+    return templates.TemplateResponse(request=request, name="edit_location.html", context={"config": configs[index], "action": action})
+
+
+@app.post("/edit/{id}")
+async def edit_location_post(request: Request,
+                            location_id: str = Form(),
+                            display_name: str = Form(),
+                            ip_address: str = Form(),
+                            is_trusted: bool = Form(False),
+                            client_id: str = Form(),
+                            client_secret: str = Form(),
+                            tenant_id: str = Form(),
+                            id: str = id
+                            ):
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    authorized, response = await check_authentication(
+        request, admin_username, admin_password)
+    if not authorized:
+        logger.info(f"Invalid Authentication from {request.client.host}")
+        return response
+
+    configs: list[Location] = read_config()
+
+    index: int | None = get_location_index_by_id(configs, id)
+
+    if index == None:
+        logger.info(f"Unable to find Location by ID")
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+    
+    logger.info(f"Received an update request for {configs[index].location_id} Old data is {configs[index]}")
+    
+    configs[index].location_id = location_id
+    configs[index].display_name = display_name
+    configs[index].ip_address = ip_address
+    configs[index].is_trusted = is_trusted
+    configs[index].client_id = client_id
+    configs[index].client_secret = client_secret
+    configs[index].tenant_id = tenant_id
+
+    logger.info(f"Storing new data: {configs[index]}")
+
+    write_config(configs)
+
+    return RedirectResponse(url='/admin', status_code=302)
 
 async def main():
     LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s [%(name)s] %(levelprefix)s %(message)s"
