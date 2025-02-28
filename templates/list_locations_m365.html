@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Location List</title>
+    <title>Location List with M365 Status</title>
 
     <style>
         table,
@@ -19,7 +19,8 @@
 </head>
 
 <body>
-    <h1>Samsa Named Location DDNS Update Applicaton - Location List </h1>
+
+    <h1>Samsa Named Location DDNS Update Applicaton - Location List with M365 Status</h1>
     <ul>
         <li><a href="{{ url_for('admin_get') }}">Return to Admin Page</a><br></li>
         <li><a href="{{ url_for('list_get') }}">See List of Locations</a><br></li>
@@ -37,14 +38,24 @@
         </tr>
         {% for config in configs %}
         <tr>
-            <td><label>{{ config.location_id }}</label></td>
-            <td><label>{{ config.display_name }}</label></td>
-            <td><label>{{ config.ip_address }}</label></td>
-            <td><label>{{ config.is_trusted }}</label></td>
-            <td><label></label></td>
-            <td><label></label></td>
-            <td><a href="{{ url_for('edit_location', id=config.location_id) }}">Edit Location</a></td>
-            <td></td>
+            <td><label>{{ config[0].location_id }}</label></td>
+            <td><label>{{ config[0].display_name }}</label></td>
+            <td><label>{{ config[0].ip_address }}</label></td>
+            <td><label>{{ config[0].is_trusted }}</label></td>
+            {% if config[0].ip_address != config[1].ip_address %}<td style="background-color: #f76c6c">
+                {% else %}
+            <td>
+                {% endif %}
+                <label>{{config[1].ip_address }}</label>
+            </td>
+            {% if config[0].is_trusted != config[1].is_trusted %}<td style="background-color: #f76c6c">
+                {% else %}
+            <td>
+                {% endif %}
+                <label>{{ config[1].is_trusted }}</label>
+            </td>
+            <td><a href="{{ url_for('edit_location', id=config[0].location_id) }}">Edit Location</a></td>
+            <td><a href="{{ url_for('list_get') }}">Update Microsoft</a></td>
         </tr>
         <tr></tr>
         {% endfor %}

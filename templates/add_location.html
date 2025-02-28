@@ -5,6 +5,13 @@
 </head>
 
 <body>
+    <h1>Samsa Named Location DDNS Update Applicaton - Add Configuration</h1>
+    <ul>
+        <li><a href="{{ url_for('admin_get') }}">Return to Admin Page</a><br></li>
+        <li><a href="{{ url_for('list_get') }}">See List of Locations</a><br></li>
+        <li><a href="{{ url_for('list_get_m365') }}">See List of Locations with Up to Date Microsoft Status</a><br></li>
+        <li><a href="{{ url_for('add_location_get') }}">Add a new Location</a><br></li>
+    </ul>
     <table>
         <form action="/add" method="post">
             <tr>

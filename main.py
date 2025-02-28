@@ -87,7 +87,20 @@ async def catch_all(request: Request, hostname: str = "", myip: str = ""):
 
 
 @app.get("/admin")
-async def list_get(request: Request):
+async def admin_get(request: Request):
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    authorized, response = await check_authentication(
+        request, admin_username, admin_password)
+    if not authorized:
+        logger.info(f"Invalid Authentication from {request.client.host}")
+        return response
+  
+    return templates.TemplateResponse(request=request, name="admin.html", context={})
+
+
+@app.get("/list-m365")
+async def list_get_m365(request: Request):
     logger: logging.Logger = logging.getLogger('uvicorn.error')
 
     authorized, response = await check_authentication(
@@ -100,8 +113,24 @@ async def list_get(request: Request):
     if config == None:
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
     else:
-        return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": config})
+        return templates.TemplateResponse(request=request, name="list_locations_m365.html", context={"configs": config})
 
+
+@app.get("/list")
+async def list_get(request: Request):
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    authorized, response = await check_authentication(
+        request, admin_username, admin_password)
+    if not authorized:
+        logger.info(f"Invalid Authentication from {request.client.host}")
+        return response
+
+    configs = read_config()
+    if configs == None:
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
+    else:
+        return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": configs})
 
 @app.get("/add")
 async def add_location_get(request: Request):

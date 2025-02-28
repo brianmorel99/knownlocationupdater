@@ -1,19 +1,28 @@
 <html>
 
 <head>
-    <title>Editting Location with ID: {{ config.location_id }}</title>
+    <title>Editing Location with ID: {{ config.location_id }}</title>
 </head>
 
 <body>
+    <h1>Samsa Named Location DDNS Update Applicaton - Editing Location with ID: {{ config.location_id }}</h1>
+    <ul>
+        <li><a href="{{ url_for('admin_get') }}">Return to Admin Page</a><br></li>
+        <li><a href="{{ url_for('list_get') }}">See List of Locations</a><br></li>
+        <li><a href="{{ url_for('list_get_m365') }}">See List of Locations with Up to Date Microsoft Status</a><br></li>
+        <li><a href="{{ url_for('add_location_get') }}">Add a new Location</a><br></li>
+    </ul>
     <table>
         <form action="{{action}}" method="post">
             <tr>
                 <td><label for="location_id">Location ID:</label></td>
-                <td><input type="text" id="location_id" name="location_id" size=50 value={{config.location_id}} required></td>
+                <td><input type="text" id="location_id" name="location_id" size=50 value={{config.location_id}}
+                        required></td>
             </tr>
             <tr>
                 <td><label for="display_name">Display Name:</label></td>
-                <td><input type="text" id="display_name" name="display_name" size=50 value={{config.display_name}} required></td>
+                <td><input type="text" id="display_name" name="display_name" size=50 value={{config.display_name}}
+                        required></td>
             </tr>
             <tr>
                 <td><label for="ip_address">IP Address:</label></td>
@@ -23,7 +32,7 @@
             <tr>
                 <td><label for="is_trusted">Is Trusted?</label></td>
                 <td align="right"><input type="checkbox" id="is_trusted" name="is_trusted" value="True" size=50 {% if
-                    config['is_trusted'] %} checked="on" {% endif %}>
+                        config['is_trusted'] %} checked="on" {% endif %}>
                 </td>
             </tr>
             <tr>
@@ -33,7 +42,8 @@
             </tr>
             <tr>
                 <td><label for="client_secret">Client Secret:</label></td>
-                <td><input type="password" id="client_secret" name="client_secret" size=50 value={{config.client_secret}} required>
+                <td><input type="password" id="client_secret" name="client_secret" size=50
+                        value={{config.client_secret}} required>
                 </td>
             </tr>
             <tr>
