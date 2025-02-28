@@ -28,10 +28,10 @@ from location import Location, get_location_index_by_id, get_location_index_by_n
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-ddns_username = os.getenv("DDNS_USERNAME")
-ddns_password = os.getenv("DDNS_PASSWORD")
-admin_username = os.getenv("ADMIN_USERNAME")
-admin_password = os.getenv("ADMIN_PASSWORD")
+ddns_username: str | None = os.getenv("DDNS_USERNAME")
+ddns_password: str | None = os.getenv("DDNS_PASSWORD")
+admin_username: str | None = os.getenv("ADMIN_USERNAME")
+admin_password: str | None = os.getenv("ADMIN_PASSWORD")
 
 bad_auth: Response = Response(
     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -548,7 +548,12 @@ async def main() -> None:
     config = uvicorn.Config("main:app", port=8080, log_level="info")
     server = uvicorn.Server(config)
 
-    await server.serve()
+    logger: logging.Logger = logging.getLogger("uvicorn.error")
+
+    if ddns_username is None or ddns_password is None or admin_password is None or admin_username is None:
+        logger.error("Required Environment Variables Not Set")
+    else:
+        await server.serve()
 
 
 if __name__ == "__main__":
