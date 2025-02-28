@@ -54,8 +54,8 @@
                 {% endif %}
                 <label>{{ config[1].is_trusted }}</label>
             </td>
-            <td><a href="{{ url_for('edit_location', id=config[0].location_id) }}">Edit Location</a></td>
-            <td><a href="{{ url_for('list_get') }}">Update Microsoft</a></td>
+            <td><a href="{{ url_for('edit_location_get', id=config[0].location_id) }}">Edit Location</a></td>
+            <td><a href="{{ url_for('update_location_get', id=config[0].location_id) }}">Update Microsoft</a></td>
         </tr>
         <tr></tr>
         {% endfor %}

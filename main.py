@@ -34,6 +34,10 @@ async def get_all_locations() -> list[tuple[Location, Location]] | None:
         if m365_location != None:
             bundle = (location, m365_location)
             bundled_locations.append(bundle)
+        else:
+            bundle = (location, Location())
+            bundled_locations.append(bundle)
+            
     if len(bundled_locations) > 0:
         return bundled_locations
     else:
@@ -78,7 +82,8 @@ async def catch_all(request: Request, hostname: str = "", myip: str = ""):
     else:
         config[index].ip_address = myip
         write_config(config)
-        if await set_named_location_ip(config[index], myip):
+        resp = await set_named_location_ip(config[index], myip)
+        if not resp:
             logger.error(
                 f"Updating IP on Microsoft Failed - {request.client.host} - {request.url}")
             return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
@@ -95,7 +100,7 @@ async def admin_get(request: Request):
     if not authorized:
         logger.info(f"Invalid Authentication from {request.client.host}")
         return response
-  
+
     return templates.TemplateResponse(request=request, name="admin.html", context={})
 
 
@@ -131,6 +136,7 @@ async def list_get(request: Request):
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
     else:
         return templates.TemplateResponse(request=request, name="list_locations.html", context={"configs": configs})
+
 
 @app.get("/add")
 async def add_location_get(request: Request):
@@ -179,27 +185,8 @@ async def add_location_post(request: Request,
     return RedirectResponse(url='/admin', status_code=302)
 
 
-@app.get("/edit")
-async def edit_location_get(request: Request, id:str):
-    logger: logging.Logger = logging.getLogger('uvicorn.error')
-
-    authorized, response = await check_authentication(
-        request, admin_username, admin_password)
-    if not authorized:
-        logger.info(f"Invalid Authentication from {request.client.host}")
-        return response
-
-    configs: list[Location] = read_config()
-
-    index: int | None = get_location_index_by_id(configs, id)
-
-    if index == None:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
-
-    return templates.TemplateResponse(request=request, name="edit_location.html", context={"config": configs[index], "action": "/edit"})
-
 @app.get("/edit/{id}")
-async def edit_location(request: Request, id:str):
+async def edit_location_get(request: Request, id: str):
     logger: logging.Logger = logging.getLogger('uvicorn.error')
 
     authorized, response = await check_authentication(
@@ -214,7 +201,7 @@ async def edit_location(request: Request, id:str):
 
     if index == None:
         return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
-    
+
     action = "/edit/" + configs[index].location_id
 
     return templates.TemplateResponse(request=request, name="edit_location.html", context={"config": configs[index], "action": action})
@@ -222,15 +209,15 @@ async def edit_location(request: Request, id:str):
 
 @app.post("/edit/{id}")
 async def edit_location_post(request: Request,
-                            location_id: str = Form(),
-                            display_name: str = Form(),
-                            ip_address: str = Form(),
-                            is_trusted: bool = Form(False),
-                            client_id: str = Form(),
-                            client_secret: str = Form(),
-                            tenant_id: str = Form(),
-                            id: str = id
-                            ):
+                             location_id: str = Form(),
+                             display_name: str = Form(),
+                             ip_address: str = Form(),
+                             is_trusted: bool = Form(False),
+                             client_id: str = Form(),
+                             client_secret: str = Form(),
+                             tenant_id: str = Form(),
+                             id: str = id
+                             ):
     logger: logging.Logger = logging.getLogger('uvicorn.error')
 
     authorized, response = await check_authentication(
@@ -246,9 +233,10 @@ async def edit_location_post(request: Request,
     if index == None:
         logger.info(f"Unable to find Location by ID")
         return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
-    
-    logger.info(f"Received an update request for {configs[index].location_id} Old data is {configs[index]}")
-    
+
+    logger.info(
+        f"Received an update request for {configs[index].location_id}\nOld data is {configs[index]}")
+
     configs[index].location_id = location_id
     configs[index].display_name = display_name
     configs[index].ip_address = ip_address
@@ -261,7 +249,36 @@ async def edit_location_post(request: Request,
 
     write_config(configs)
 
-    return RedirectResponse(url='/admin', status_code=302)
+    return RedirectResponse(url='/list-m365', status_code=302)
+
+
+@app.get("/update/{id}")
+async def update_location_get(request: Request, id: str = id):
+    logger: logging.Logger = logging.getLogger('uvicorn.error')
+
+    authorized, response = await check_authentication(
+        request, admin_username, admin_password)
+    if not authorized:
+        logger.info(f"Invalid Authentication from {request.client.host}")
+        return response
+
+    configs: list[Location] = read_config()
+
+    index: int | None = get_location_index_by_id(configs, id)
+
+    if index == None:
+        logger.info(f"Unable to find Location by ID")
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Invalid Data")
+
+    logger.info(f"Updating Microsoft for location id: {configs[index].location_id}\nData is {configs[index]}")
+
+    resp = await set_named_location_ip(configs[index], configs[index].ip_address)
+    if not resp:
+            logger.error(f"Updating IP on Microsoft Failed Location ID: {configs[index].location_id}, New IP address: {configs[index].ip_address}")
+            return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
+    else:
+        return RedirectResponse(url='/list-m365', status_code=302)
+
 
 async def main():
     LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s [%(name)s] %(levelprefix)s %(message)s"
