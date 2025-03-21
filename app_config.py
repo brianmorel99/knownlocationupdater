@@ -26,10 +26,12 @@ def read_config() -> list[Location]:
         Returns a list of Location Objects, one for each in config.yaml.
 
     """
-    with Path("config.yml").open() as file_object:
-        data: any = yaml.load(file_object, Loader=yaml.SafeLoader)
-
-    return __parse_config(data)
+    try:
+        with Path("config.yml").open() as file_object:
+            data: any = yaml.load(file_object, Loader=yaml.SafeLoader)
+        return __parse_config(data)
+    except FileNotFoundError:
+        return []
 
 
 def write_config(data: list[Location]) -> None:

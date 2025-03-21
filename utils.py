@@ -32,6 +32,9 @@ async def get_all_locations() -> list[tuple[Location, Location]] | None:
     """
     config: list[Location] = read_config()
 
+    if len(config) == 0:
+        return None
+
     bundled_locations: list[tuple[Location, Location]] = []
 
     for location in config:

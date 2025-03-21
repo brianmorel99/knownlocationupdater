@@ -143,7 +143,7 @@ async def list_get_m365(request: Request) -> Response:
     # If the config is empty, error out
     # Else return a template passing the config as context
     if config is None:
-        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Internal Server Error")
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="No Configuration File")
 
     return templates.TemplateResponse(request=request, name="list_locations_m365.html", context={"configs": config})
 

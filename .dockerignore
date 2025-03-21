@@ -1,0 +1,7 @@
+__pycache__
+.venv
+screenshots/*
+.env
+.gitignore
+config/config.yml
+compose.yml
