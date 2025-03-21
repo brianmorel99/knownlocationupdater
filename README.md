@@ -45,10 +45,39 @@ This application was designed to help update Microsoft Named Location's which ca
 * * * location_id
 
 ## Fill out your Config
-* Fill out config.yml for initial setup.
-* * See sample config-sample.yml
-* * Fill in the appopriate values saved earlier.
+* Set up a directory where you want to run the application.
+* * Copy compose-sample.yml to the directory, save it as compose.yml
+* Create a subdirectory & call it "config"
+* * Copy config-sample.yml to config/config.yml
+* You should have the below directory structure and files
+```
+.
+ |-compose.yml
+ |-config
+ | |-config.yml
+```
+* * Open config.yml file, and fill out with the values saved earlier.
+* * * The file can handle multiple locations, if not required, remove the second entry in the file.
+* * Open compose.yml and fill in the environment values required for the app
+* * * You can also change the default exposed port (8080) in the compose.yml file.
 
+* A Config file is not required, and the locations can be added through the web interface.
+* * It will still save a copy to the local config directory to persist the information between runs.
+* * You still need the config directory, but you can leave it empty for first run
+
+## ****** WARNING *********
+* This application MUST be run behind a proxy server that handles TLS/SSL termination.
+* The DDNS protocol used uses HTTP Basic Authentication, which will transmit the login information in plain text.
+* Setup for a proxy server is beyond the scope of this application, Kubernetes can also be used
+* Setup proxy server to terminate TLS and forward the requests to this application @ port 8080 (Unless changed)
+
+## Run docker image
+* In the directory created earlier, run the below command to run the application in the background
+* * ```docker compose up -d```
+* If you want to run it in the foreground, remove the "-d"
+* Test the application using the below link (Unless you changed ports)
+* * http://localhost:8080/admin
+* * The login information was the username and password you set up in the compose.yml file.
 
 # Build Application / Docker Image
 * Install Docker

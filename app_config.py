@@ -27,7 +27,7 @@ def read_config() -> list[Location]:
 
     """
     try:
-        with Path("config.yml").open() as file_object:
+        with Path("config/config.yml").open() as file_object:
             data: any = yaml.load(file_object, Loader=yaml.SafeLoader)
         return __parse_config(data)
     except FileNotFoundError:
@@ -46,7 +46,7 @@ def write_config(data: list[Location]) -> None:
         test = vars(loc)
         locations.append(test)
 
-    with Path("config.yml").open("w") as file_object:
+    with Path("config/config.yml").open("w") as file_object:
         yaml.dump(locations, file_object)
 
 

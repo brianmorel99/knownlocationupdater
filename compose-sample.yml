@@ -1,0 +1,14 @@
+services:
+  app:
+    image: samsabmorel/knownlocationupdater # If you built and pushed your own image, change this line.
+    volumes:
+      - type: bind
+        source: ./config
+        target: /app/config
+    ports:
+      - "8080:8080"   #If you want to you can change the first part of the line HOST_PORT:CONTAINER_PORT
+    environment:
+      DDNS_USERNAME:    #This is where to enter the username used in DDNS on router / firewalls
+      DDNS_PASSWORD:    #This is where to enter the password used in DDNS on router / firewalls
+      ADMIN_USERNAME:   #This is where to enter the username for the admin page
+      ADMIN_PASSWORD:   #This is where to enter the password for the admin page
