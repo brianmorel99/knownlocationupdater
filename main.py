@@ -42,7 +42,7 @@ async def main() -> None:
     LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
         '%(asctime)s [%(name)s] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
     )
-    config = uvicorn.Config("main:app", port=8080, log_level="info")
+    config = uvicorn.Config("main:app", host="0.0.0.0", port=8080, log_level="info")
     server = uvicorn.Server(config)
 
     logger: logging.Logger = logging.getLogger("uvicorn.error")
