@@ -51,7 +51,7 @@ async def catch_all(request: Request, hostname: str = "", myip: str = "") -> Res
     # Check to see if the request had the correct HTTP Basic Auth, if not return error.
     authorized, response = await check_authentication(request, ddns_username, ddns_password)
     if not authorized:
-        logger.info("Invalid Authentication", extra=request.client.host)
+        logger.info("Invalid Authentication")
         return response
 
     # Read the configuration from file and store as a list of Locations

@@ -2,3 +2,4 @@ config.yml
 .venv/
 __pycache__/
 .env
+compose.yml
