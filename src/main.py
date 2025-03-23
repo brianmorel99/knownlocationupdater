@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from uvicorn.config import LOGGING_CONFIG
 
-import routes
+import knownlocationupdater.src.routes as routes
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
