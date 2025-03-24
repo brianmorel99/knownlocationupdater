@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from app_config import read_config, write_config
 from graph import get_current_location_ip, set_named_location_ip
 from location import Location, get_location_index_by_id, get_location_index_by_name
-from knownlocationupdater.src.utils import check_authentication, get_all_locations
+from utils import check_authentication, get_all_locations
 
 templates = Jinja2Templates(directory="templates")
 
