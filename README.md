@@ -15,6 +15,33 @@ This application uses the Microsoft Graph API to update Known Location objects w
 * Setup for a proxy server is beyond the scope of this application, Kubernetes can also be used
 * Setup proxy server to terminate TLS and forward the requests to this application @ port 8080 (Unless changed)
 
+## Quick Start / Local Test
+### 1. Prepare to Run Docker Image
+* Set up a directory where you want to run the application.
+* * Copy compose-sample.yml to the directory, save it as compose.yml
+* * * ```curl https://raw.githubusercontent.com/brianmorel99/knownlocationupdater/refs/heads/main/compose-sample.yml -o compose.yml```
+* * Open compose.yml and fill in the environment values required for the app
+* * * There are two sets of login information injected into the image as environment variables
+* * * DDNS_USERNAME & DDNS_PASSWORD are set to the login information you will use in your DDNS configuration on the firewall
+* * * ADMIN_USERNAME & ADMIN_PASSWORD are set so you can log into the web interface
+* * * You can also change the default exposed port (8080) in the compose.yml file.
+
+### 2. Create config directory
+* A Config file is not required, and the locations can be added through the web interface.
+* * It will still save a copy to the local config directory to persist the information between runs.
+* * You still need the config directory, but you can leave it empty for first run
+* Create a subdirectory & call it "config"
+
+### 3. Run docker image
+* In the directory created earlier, run the below command to run the application in the background
+* * ```docker compose up -d```
+* If you want to run it in the foreground, remove the "-d"
+* Test the application using the below link (Unless you changed ports)
+* * http://localhost:8080/admin
+* * The login information was the username and password you set up in the compose.yml file.
+
+## Project Description Video
+* Please watch [This Video](https://youtu.be/kjq_ZfLiGIE) for an explanation of the project.
 ## Usage
 
 ### 1. Set up Application to Connect via Graph API
